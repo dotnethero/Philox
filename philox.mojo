@@ -1,5 +1,6 @@
 alias UInt32x2 = SIMD[DType.uint32, 2]
 alias UInt32x4 = SIMD[DType.uint32, 4]
+
 alias UInt64x2 = SIMD[DType.uint64, 2]
 alias UInt64x4 = SIMD[DType.uint64, 4]
 
@@ -45,51 +46,53 @@ fn philox4x_round(key: UInt64x2, ctr: UInt64x4) -> UInt64x4:
     var hilo2 = philox_mulhilo(PHILOX_M4x_1, ctr[2])
     return UInt64x4(hilo2[0] ^ ctr[1] ^ key[0], hilo2[1], hilo1[0] ^ ctr[3] ^ key[1], hilo1[1])
 
-@always_inline
-fn philox4x[R: UInt32 = 10](key: UInt32x2, ctr: UInt32x4) -> UInt32x4:
-    var ctrx = ctr
-    var keyx = key
-    @parameter
-    for i in range(0, R):
-        ctrx = philox4x_round(keyx, ctrx);
-        keyx = philox4x_bumpkey(keyx);
-    return ctrx
+alias Key = SIMD[_, 2]
+alias Counter = SIMD[_, 4]
 
 @always_inline
-fn philox4x[R: UInt32 = 10](key: UInt64x2, ctr: UInt64x4) -> UInt64x4:
+fn philox4x[
+    T: DType,
+    BumpKey: fn(Key[T]) -> Key[T],
+    Round: fn(Key[T], Counter[T]) -> Counter[T],
+    R: UInt32 = 10](key: Key[T], ctr: Counter[T]) -> Counter[T]:
+    """
+    Runs the Philox algorithm for R rounds. Returns four values.
+    """
     var ctrx = ctr
     var keyx = key
+    
     @parameter
     for i in range(0, R):
-        ctrx = philox4x_round(keyx, ctrx);
-        keyx = philox4x_bumpkey(keyx);
+        ctrx = Round(keyx, ctrx);
+        keyx = BumpKey(keyx);
+
     return ctrx
 
 from memory import Span
 
-struct PhiloxGenerator[R: UInt32 = 10]:
-    var key: UInt64x2
-    var counter: UInt64x4
+struct PhiloxGenerator[T: DType, BumpKey: fn(Key[T]) -> Key[T], Round: fn(Key[T], Counter[T]) -> Counter[T], R: UInt32 = 10]:
+    var key: Key[T]
+    var counter: Counter[T]
 
-    fn __init__(out self, seed1: UInt64, seed2: UInt64):
-        self.key = UInt64x2(seed1, seed2)
-        self.counter = UInt64x4(0, 0, 0, 0)
+    fn __init__(out self, seed1: Scalar[T], seed2: Scalar[T]):
+        self.key = Key[T](seed1, seed2)
+        self.counter = Counter[T](0, 0, 0, 0)
 
     fn increment_counter(mut self):
         var c0 = self.counter[0] + 1
-        var c1 = self.counter[1] + UInt64(c0 == 0)
-        var c2 = self.counter[2] + UInt64(c0 == 0 and c1 == 0)
-        var c3 = self.counter[3] + UInt64(c0 == 0 and c1 == 0 and c2 == 0)
-        self.counter = UInt64x4(c0, c1, c2, c3)
+        var c1 = self.counter[1] + Scalar[T](c0 == 0)
+        var c2 = self.counter[2] + Scalar[T](c0 == 0 and c1 == 0)
+        var c3 = self.counter[3] + Scalar[T](c0 == 0 and c1 == 0 and c2 == 0)
+        self.counter = Counter[T](c0, c1, c2, c3)
 
-    fn fill(mut self, mut buffer: Span[mut=True, UInt64]):
+    fn fill(mut self, mut buffer: Span[mut=True, Scalar[T]]):
         var ptr = buffer.unsafe_ptr()
         var size = len(buffer)
         var iterations = size // 4
         var leftover = size - iterations * 4
 
         for i in range(0, iterations):
-            var result = philox4x(self.key, self.counter)
+            var result = philox4x[T, BumpKey, Round, R](self.key, self.counter)
             var offset = i * 4
             ptr[offset + 0] = result[0]
             ptr[offset + 1] = result[1]
@@ -98,7 +101,7 @@ struct PhiloxGenerator[R: UInt32 = 10]:
             self.increment_counter()
 
         if leftover > 0:
-            var result = philox4x(self.key, self.counter)
+            var result = philox4x[T, BumpKey, Round, R](self.key, self.counter)
             var offset = iterations * 4
             if leftover > 0:
                 ptr[offset + 0] = result[0]
@@ -115,7 +118,7 @@ fn main():
     seed()
     var seed1 = 0 # random_ui64(0, 0xFFFFFFFF);
     var seed2 = 0 # random_ui64(0, 0xFFFFFFFF);
-    var state = PhiloxGenerator(seed1, seed2)
+    var state = PhiloxGenerator[DType.uint64, philox4x_bumpkey, philox4x_round](seed1, seed2)
     var list = InlineArray[UInt64, 12](fill = 10)
     var buffer = Span(list)
     state.fill(buffer)
