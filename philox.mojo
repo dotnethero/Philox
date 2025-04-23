@@ -20,31 +20,33 @@ fn philox_mulhilo(a: UInt64, b: UInt64) -> UInt64x2:
 
 @always_inline
 fn philox4x_bumpkey(key: UInt32x2) -> UInt32x2:
-    alias PHILOX_W_0: UInt32 = 0x9E3779B9
-    alias PHILOX_W_1: UInt32 = 0xBB67AE85
-    return UInt32x2(key[0] + PHILOX_W_0, key[1] + PHILOX_W_1)
+    alias W = UInt32x2(0x9E3779B9, 0xBB67AE85)
+    return key + W
 
 @always_inline
 fn philox4x_bumpkey(key: UInt64x2) -> UInt64x2:
-    alias PHILOX_W_0: UInt64 = 0x9E3779B97F4A7C15
-    alias PHILOX_W_1: UInt64 = 0xBB67AE8584CAA73B
-    return UInt64x2(key[0] + PHILOX_W_0, key[1] + PHILOX_W_1)
+    alias W = UInt64x2(0x9E3779B97F4A7C15, 0xBB67AE8584CAA73B)
+    return key + W
 
 @always_inline
 fn philox4x_round(key: UInt32x2, ctr: UInt32x4) -> UInt32x4:
-    alias PHILOX_M4x_0: UInt32 = 0xD2511F53
-    alias PHILOX_M4x_1: UInt32 = 0xCD9E8D57
-    var hilo1 = philox_mulhilo(PHILOX_M4x_0, ctr[0])
-    var hilo2 = philox_mulhilo(PHILOX_M4x_1, ctr[2])
-    return UInt32x4(hilo2[0] ^ ctr[1] ^ key[0], hilo2[1], hilo1[0] ^ ctr[3] ^ key[1], hilo1[1]) # TODO: SIMD XOR
+    alias M4 = UInt32x2(0xD2511F53, 0xCD9E8D57)
+    var hilo1 = philox_mulhilo(M4[0], ctr[0])
+    var hilo2 = philox_mulhilo(M4[1], ctr[2])
+    var a = UInt32x4(hilo2[0], hilo2[1], hilo1[0], hilo1[1])
+    var b = UInt32x4(ctr[1], 0, ctr[3], 0)
+    var c = UInt32x4(key[0], 0, key[1], 0)
+    return a ^ b ^ c
 
 @always_inline
 fn philox4x_round(key: UInt64x2, ctr: UInt64x4) -> UInt64x4:
-    alias PHILOX_M4x_0: UInt64 = 0xD2E7470EE14C6C93
-    alias PHILOX_M4x_1: UInt64 = 0xCA5A826395121157
-    var hilo1 = philox_mulhilo(PHILOX_M4x_0, ctr[0])
-    var hilo2 = philox_mulhilo(PHILOX_M4x_1, ctr[2])
-    return UInt64x4(hilo2[0] ^ ctr[1] ^ key[0], hilo2[1], hilo1[0] ^ ctr[3] ^ key[1], hilo1[1])
+    alias M4 = UInt64x2(0xD2E7470EE14C6C93, 0xCA5A826395121157)
+    var hilo1 = philox_mulhilo(M4[0], ctr[0])
+    var hilo2 = philox_mulhilo(M4[1], ctr[2])
+    var a = UInt64x4(hilo2[0], hilo2[1], hilo1[0], hilo1[1])
+    var b = UInt64x4(ctr[1], 0, ctr[3], 0)
+    var c = UInt64x4(key[0], 0, key[1], 0)
+    return a ^ b ^ c
 
 alias Key = SIMD[_, 2]
 alias Counter = SIMD[_, 4]
@@ -81,7 +83,7 @@ struct PhiloxGenerator[T: DType, BumpKey: fn(Key[T]) -> Key[T], Round: fn(Key[T]
 
     @always_inline
     fn increment_counter(mut self):
-        var c0 = self.counter[0] + 1
+        var c0 = self.counter[0] + 1 # TODO: Skip overflow?
         var c1 = self.counter[1] + Scalar[T](c0 == 0)
         var c2 = self.counter[2] + Scalar[T](c0 == 0 and c1 == 0)
         var c3 = self.counter[3] + Scalar[T](c0 == 0 and c1 == 0 and c2 == 0)
@@ -95,10 +97,7 @@ struct PhiloxGenerator[T: DType, BumpKey: fn(Key[T]) -> Key[T], Round: fn(Key[T]
         for i in range(0, iterations):
             var result = philox4x[T, BumpKey, Round, R](self.key, self.counter)
             var offset = i * 4
-            ptr[offset + 0] = result[0] # TODO: store SIMD
-            ptr[offset + 1] = result[1]
-            ptr[offset + 2] = result[2]
-            ptr[offset + 3] = result[3]
+            ptr.store(offset, result)
             self.increment_counter()
 
         if leftover > 0:
@@ -127,7 +126,7 @@ fn main():
     var seed1 = 0 # random_ui64(0, 0xFFFFFFFF);
     var seed2 = 0 # random_ui64(0, 0xFFFFFFFF);
     var generator = PhiloxGenerator64(seed1, seed2)
-    var list = InlineArray[UInt64, 13]()
+    var list = InlineArray[UInt64, 12](0)
     var buffer = Span(list)
     generator.fill(buffer)
     for i in range(0, len(list)):
