@@ -36,7 +36,7 @@ fn philox4x_round(key: UInt32x2, ctr: UInt32x4) -> UInt32x4:
     alias PHILOX_M4x_1: UInt32 = 0xCD9E8D57
     var hilo1 = philox_mulhilo(PHILOX_M4x_0, ctr[0])
     var hilo2 = philox_mulhilo(PHILOX_M4x_1, ctr[2])
-    return UInt32x4(hilo2[0] ^ ctr[1] ^ key[0], hilo2[1], hilo1[0] ^ ctr[3] ^ key[1], hilo1[1])
+    return UInt32x4(hilo2[0] ^ ctr[1] ^ key[0], hilo2[1], hilo1[0] ^ ctr[3] ^ key[1], hilo1[1]) # TODO: SIMD XOR
 
 @always_inline
 fn philox4x_round(key: UInt64x2, ctr: UInt64x4) -> UInt64x4:
@@ -95,7 +95,7 @@ struct PhiloxGenerator[T: DType, BumpKey: fn(Key[T]) -> Key[T], Round: fn(Key[T]
         for i in range(0, iterations):
             var result = philox4x[T, BumpKey, Round, R](self.key, self.counter)
             var offset = i * 4
-            ptr[offset + 0] = result[0]
+            ptr[offset + 0] = result[0] # TODO: store SIMD
             ptr[offset + 1] = result[1]
             ptr[offset + 2] = result[2]
             ptr[offset + 3] = result[3]
@@ -126,10 +126,10 @@ fn main():
     seed()
     var seed1 = 0 # random_ui64(0, 0xFFFFFFFF);
     var seed2 = 0 # random_ui64(0, 0xFFFFFFFF);
-    var state = PhiloxGenerator64(seed1, seed2)
+    var generator = PhiloxGenerator64(seed1, seed2)
     var list = InlineArray[UInt64, 13]()
     var buffer = Span(list)
-    state.fill(buffer)
+    generator.fill(buffer)
     for i in range(0, len(list)):
         print(list[i], end = " ")
         if (i % 4 == 3):
