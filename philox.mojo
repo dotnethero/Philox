@@ -68,8 +68,9 @@ fn philox4x[
 
     return ctrx
 
-from memory import Span
+from memory import Span, UnsafePointer
 
+@register_passable
 struct PhiloxGenerator[T: DType, BumpKey: fn(Key[T]) -> Key[T], Round: fn(Key[T], Counter[T]) -> Counter[T], R: UInt32 = 10]:
     var key: Key[T]
     var counter: Counter[T]
@@ -78,6 +79,7 @@ struct PhiloxGenerator[T: DType, BumpKey: fn(Key[T]) -> Key[T], Round: fn(Key[T]
         self.key = Key[T](seed1, seed2)
         self.counter = Counter[T](0, 0, 0, 0)
 
+    @always_inline
     fn increment_counter(mut self):
         var c0 = self.counter[0] + 1
         var c1 = self.counter[1] + Scalar[T](c0 == 0)
@@ -85,9 +87,8 @@ struct PhiloxGenerator[T: DType, BumpKey: fn(Key[T]) -> Key[T], Round: fn(Key[T]
         var c3 = self.counter[3] + Scalar[T](c0 == 0 and c1 == 0 and c2 == 0)
         self.counter = Counter[T](c0, c1, c2, c3)
 
-    fn fill(mut self, mut buffer: Span[mut=True, Scalar[T]]):
-        var ptr = buffer.unsafe_ptr()
-        var size = len(buffer)
+    @always_inline
+    fn fill(mut self, ptr: UnsafePointer[Scalar[T]], size: UInt32):
         var iterations = size // 4
         var leftover = size - iterations * 4
 
@@ -111,6 +112,13 @@ struct PhiloxGenerator[T: DType, BumpKey: fn(Key[T]) -> Key[T], Round: fn(Key[T]
                 ptr[offset + 2] = result[2]
             self.increment_counter()
 
+    @always_inline
+    fn fill(mut self, mut buffer: Span[Scalar[T]]):
+        self.fill(buffer.unsafe_ptr(), len(buffer))
+        pass
+        
+alias PhiloxGenerator32 = PhiloxGenerator[DType.uint32, philox4x_bumpkey, philox4x_round, _]
+alias PhiloxGenerator64 = PhiloxGenerator[DType.uint64, philox4x_bumpkey, philox4x_round, _]
 
 from random import seed, random_ui64
 
@@ -118,8 +126,8 @@ fn main():
     seed()
     var seed1 = 0 # random_ui64(0, 0xFFFFFFFF);
     var seed2 = 0 # random_ui64(0, 0xFFFFFFFF);
-    var state = PhiloxGenerator[DType.uint64, philox4x_bumpkey, philox4x_round](seed1, seed2)
-    var list = InlineArray[UInt64, 12](fill = 10)
+    var state = PhiloxGenerator64(seed1, seed2)
+    var list = InlineArray[UInt64, 13]()
     var buffer = Span(list)
     state.fill(buffer)
     for i in range(0, len(list)):
