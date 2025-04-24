@@ -19,18 +19,6 @@ fn philox_mulhilo(a: UInt64, b: UInt64) -> UInt64x2:
     return UInt64x2(hi, lo)
 
 @always_inline
-fn to_float32(x: UInt32) -> Float32:
-    alias Mantissa = UInt32(1) << 23
-    alias Multiplier = Float32(1) / Float32(Mantissa)
-    return Float32(x >> 9) * Multiplier
-
-@always_inline
-fn to_float64(x: UInt64) -> Float64:
-    alias Mantissa = UInt64(1) << 52
-    alias Multiplier = Float64(1) / Float64(Mantissa)
-    return Float64(x >> 12) * Multiplier
-
-@always_inline
 fn philox4x32_bumpkey(key: UInt32x2) -> UInt32x2:
     alias W = UInt32x2(0x9E3779B9, 0xBB67AE85)
     return key + W
@@ -92,36 +80,15 @@ fn increment[T: DType](ctr: RngCounter[T]) -> RngCounter[T]:
     var c3 = ctr[3] + Scalar[T](c0 == 0 and c1 == 0 and c2 == 0)
     return RngCounter[T](c0, c1, c2, c3)
 
-@always_inline
-fn fill[T: DType, Philox: fn(RngKey[T], RngCounter[T]) -> RngValue[T]](
-    key: RngKey[T],
-    ctr: RngCounter[T],
-    ptr: UnsafePointer[Scalar[T]],
-    size: UInt32) -> RngCounter[T]:
-
-    var iterations = size // 4
-    var leftover = size - iterations * 4
-    var ctrx = ctr
-    
-    for i in range(0, iterations):
-        var result = Philox(key, ctrx)
-        var offset = i * 4
-        ptr.store(offset, result)
-        ctrx = increment(ctrx)
-
-    if leftover > 0:
-        var result = Philox(key, ctrx)
-        var offset = iterations * 4
-        for i in range(0, leftover):
-            ptr[offset + i] = result[i]
-        ctrx = increment(ctrx)
-    
-    return ctrx;
-
-from memory import Span, UnsafePointer
+from memory import UnsafePointer
 
 @register_passable
-struct PhiloxGenerator[T: DType, Philox: fn(RngKey[T], RngCounter[T]) -> RngValue[T]]:
+struct PhiloxGenerator[
+    T: DType, # Underlying type
+    U: DType, # Target type
+    Philox: fn(RngKey[T], RngCounter[T]) -> RngValue[T],
+    Map: fn(RngValue[T]) -> RngValue[U]]:
+
     var key: RngKey[T]
     var counter: RngCounter[T]
 
@@ -130,47 +97,60 @@ struct PhiloxGenerator[T: DType, Philox: fn(RngKey[T], RngCounter[T]) -> RngValu
         self.counter = RngCounter[T](0, 0, 0, 0)
 
     @always_inline
-    fn next(self) -> RngValue[T]:
-        return Philox(self.key, self.counter)
+    fn next(mut self) -> RngValue[U]:
+        var value = Map(Philox(self.key, self.counter))
+        return value
 
     @always_inline
-    fn fill(mut self, ptr: UnsafePointer[Scalar[T]], size: UInt32):
-        self.counter = fill[T, Philox](self.key, self.counter, ptr, size)
+    fn fill(mut self, ptr: UnsafePointer[Scalar[U]], size: UInt32):
+        var iterations = size // 4
+        var leftover = size - iterations * 4
         
-    @always_inline
-    fn fill(mut self, mut buffer: Span[Scalar[T]]):
-        self.fill(buffer.unsafe_ptr(), len(buffer))
-        
-alias PhiloxGenerator32 = PhiloxGenerator[DType.uint32, philox4x32[R = 10]]
-alias PhiloxGenerator64 = PhiloxGenerator[DType.uint64, philox4x64[R = 10]]
+        for i in range(0, iterations):
+            var result = Map(Philox(self.key, self.counter))
+            var offset = i * 4
+            ptr.store(offset, result)
+            self.counter = increment(self.counter)
+
+        if leftover > 0:
+            var result = Map(Philox(self.key, self.counter))
+            var offset = iterations * 4
+            for i in range(0, leftover):
+                ptr[offset + i] = result[i]
+            self.counter = increment(self.counter)
+
+@always_inline
+fn identity[T: DType, Width: Int](x: SIMD[T, Width]) -> SIMD[T, Width]:
+    return x
+
+@always_inline
+fn to_float32[Width: Int](x: SIMD[DType.uint32, Width]) -> SIMD[DType.float32, Width]:
+    alias Mantissa = UInt32(1) << 23
+    alias Multiplier = Float32(1) / Float32(Mantissa)
+    return (x >> 9).cast[DType.float32]() * Multiplier
+
+@always_inline
+fn to_float64[Width: Int](x: SIMD[DType.uint64, Width]) -> SIMD[DType.float64, Width]:
+    alias Mantissa = UInt64(1) << 52
+    alias Multiplier = Float64(1) / Float64(Mantissa)
+    return (x >> 12).cast[DType.float64]() * Multiplier
+
+alias PhiloxUInt32 = PhiloxGenerator[DType.uint32, DType.uint32, philox4x32[R = 10], identity[DType.uint32, 4]]
+alias PhiloxUInt64 = PhiloxGenerator[DType.uint64, DType.uint64, philox4x64[R = 10], identity[DType.uint64, 4]]
+alias PhiloxFloat32 = PhiloxGenerator[DType.uint32, DType.float32, philox4x32[R = 10], to_float32[4]]
+alias PhiloxFloat64 = PhiloxGenerator[DType.uint64, DType.float64, philox4x64[R = 10], to_float64[4]]
 
 from random import seed, random_ui64
-
-fn map[
-    Size: Int,
-    Width: Int,
-    T: DType,
-    U: DType, //,
-    Map: fn(SIMD[T, Width]) -> SIMD[U, Width]](src: InlineArray[SIMD[T, Width], Size]) -> InlineArray[SIMD[U, Width], Size]:
-
-    var dst = InlineArray[SIMD[U, Width], Size](uninitialized = True)
-    @parameter
-    for i in range(0, Size):
-        dst[i] = Map(src[i])
-    return dst
 
 fn main():
     seed()
     var seed1 = 0 # random_ui64(0, 0xFFFFFFFF);
     var seed2 = 0 # random_ui64(0, 0xFFFFFFFF);
-    var generator = PhiloxGenerator64(seed1, seed2)
-    var list = InlineArray[UInt64, 12](uninitialized = True)
-    var buffer = Span(list)
-    generator.fill(buffer)
+    var generator = PhiloxFloat64(seed1, seed2)
+    var list = InlineArray[Float64, 12](fill = 0)
+    generator.fill(list.unsafe_ptr(), len(list))
     
-    var result = map[to_float64](list)
-
-    for i in range(0, len(result)):
-        print(result[i], end = " ")
+    for i in range(0, len(list)):
+        print(list[i], end = " ")
         if (i % 4 == 3):
             print()
