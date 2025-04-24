@@ -1,6 +1,6 @@
 from random import seed, random_ui64
+from philox import PhiloxFloat64
 from philox.presentation import print_simd, print_array
-from philox import PhiloxFloat64, identity
 
 fn main():
     seed()
