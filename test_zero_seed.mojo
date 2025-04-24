@@ -1,4 +1,4 @@
-from testing import assert_equal
+from testing import assert_equal, assert_almost_equal
 from philox import PhiloxUInt64, PhiloxFloat64
 
 def test_next_uint64():

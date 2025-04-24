@@ -29,6 +29,7 @@ struct PhiloxGenerator[
     @always_inline
     fn next(mut self) -> RngValue[U]:
         var value = Map(Philox(self.key, self.counter))
+        self.counter = increment(self.counter)
         return value
 
     @always_inline
