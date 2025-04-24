@@ -19,6 +19,18 @@ fn philox_mulhilo(a: UInt64, b: UInt64) -> UInt64x2:
     return UInt64x2(hi, lo)
 
 @always_inline
+fn to_float32(x: UInt32) -> Float32:
+    alias Mantissa = UInt32(1) << 23
+    alias Multiplier = Float32(1) / Float32(Mantissa)
+    return Float32(x >> 9) * Multiplier
+
+@always_inline
+fn to_float64(x: UInt64) -> Float64:
+    alias Mantissa = UInt64(1) << 52
+    alias Multiplier = Float64(1) / Float64(Mantissa)
+    return Float64(x >> 12) * Multiplier
+
+@always_inline
 fn philox4x32_bumpkey(key: UInt32x2) -> UInt32x2:
     alias W = UInt32x2(0x9E3779B9, 0xBB67AE85)
     return key + W
@@ -134,15 +146,31 @@ alias PhiloxGenerator64 = PhiloxGenerator[DType.uint64, philox4x64[R = 10]]
 
 from random import seed, random_ui64
 
+fn map[
+    Size: Int,
+    Width: Int,
+    T: DType,
+    U: DType, //,
+    Map: fn(SIMD[T, Width]) -> SIMD[U, Width]](src: InlineArray[SIMD[T, Width], Size]) -> InlineArray[SIMD[U, Width], Size]:
+
+    var dst = InlineArray[SIMD[U, Width], Size](uninitialized = True)
+    @parameter
+    for i in range(0, Size):
+        dst[i] = Map(src[i])
+    return dst
+
 fn main():
     seed()
     var seed1 = 0 # random_ui64(0, 0xFFFFFFFF);
     var seed2 = 0 # random_ui64(0, 0xFFFFFFFF);
     var generator = PhiloxGenerator64(seed1, seed2)
-    var list = InlineArray[UInt64, 12](0)
+    var list = InlineArray[UInt64, 12](uninitialized = True)
     var buffer = Span(list)
     generator.fill(buffer)
-    for i in range(0, len(list)):
-        print(list[i], end = " ")
+    
+    var result = map[to_float64](list)
+
+    for i in range(0, len(result)):
+        print(result[i], end = " ")
         if (i % 4 == 3):
             print()
