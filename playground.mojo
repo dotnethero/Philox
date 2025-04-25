@@ -14,9 +14,6 @@ fn main() raises:
     
     for i in range(bins):
         var deviation_percent = abs(histogram[i] - expected) * 100.0 / expected
-        var log = String.format("Bin {}: {}, Deviation: {}% - {}",
-            i,
-            histogram[i],
-            deviation_percent,
-            String("OK") if deviation_percent < max_deviation_percent else "Error")
+        var result = String("OK") if deviation_percent < max_deviation_percent else "Error"
+        var log = String.format("Bin {}: {}, Deviation: {}% - {}", i, histogram[i], deviation_percent, result)
         print(log)
