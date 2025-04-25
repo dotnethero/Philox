@@ -3,7 +3,7 @@ from philox import PhiloxFloat64
 from philox.presentation import print_simd, print_array
 from philox.testing import get_histogram
 
-fn test_histogram() raises:
+fn main() raises:
     alias bins = 20
     alias samples = 10_000_000
     alias max_deviation_percent = 0.5
@@ -14,8 +14,9 @@ fn test_histogram() raises:
     
     for i in range(bins):
         var deviation_percent = abs(histogram[i] - expected) * 100.0 / expected
-        var log = String.format("Bin {}: {}, Deviation: {}% - {}", i, histogram[i], deviation_percent, String("OK") if deviation_percent < max_deviation_percent else "Error")
+        var log = String.format("Bin {}: {}, Deviation: {}% - {}",
+            i,
+            histogram[i],
+            deviation_percent,
+            String("OK") if deviation_percent < max_deviation_percent else "Error")
         print(log)
-
-fn main() raises:
-    test_histogram()
