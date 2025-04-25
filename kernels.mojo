@@ -19,7 +19,7 @@ fn main() raises:
     var ctx = DeviceContext()
     var output_host = ctx.enqueue_create_host_buffer[DType.float64](size)
     var output_dev = ctx.enqueue_create_buffer[DType.float64](size)
-    ctx.enqueue_function[fill_kernel](output_dev, size, grid_dim=grid_size, block_dim=block_size)
+    ctx.enqueue_function[fill_kernel](output_dev, size, grid_dim=grid_size, block_dim=block_size) # TODO: compile & measure time
     output_dev.enqueue_copy_to(output_host)
     ctx.synchronize()
     
