@@ -1,23 +1,7 @@
-from random import seed, random_ui64
-from philox import philox4x32, philox4x64, to_float32, to_float64
-from philox.presentation import print_simd, print_array
-from philox.testing import get_histogram
-from memory import UnsafePointer
 from time import perf_counter_ns
-
-fn cpu_kernel_32(buffer: UnsafePointer[Scalar[DType.float32]], size: Int, idx: Int):
-    var key = SIMD[DType.uint32, 2](0, 0)
-    var ctr = SIMD[DType.uint32, 4](idx, 0, 0, 0)
-    var rng = philox4x32[Rounds=7](key, ctr)
-    var val = to_float32(rng)
-    buffer.store(idx * 4, val) # TODO: bound check
-
-fn cpu_kernel_64(buffer: UnsafePointer[Scalar[DType.float64]], size: Int, idx: Int):
-    var key = SIMD[DType.uint64, 2](0, 0)
-    var ctr = SIMD[DType.uint64, 4](idx, 0, 0, 0)
-    var rng = philox4x64[Rounds=7](key, ctr)
-    var val = to_float64(rng)
-    buffer.store(idx * 4, val) # TODO: bound check
+from random import seed, random_ui64
+from memory import UnsafePointer
+from philox.reference import cpu_kernel_32, cpu_kernel_64
 
 fn run_test[T: DType, //, cpu_kernel: fn(UnsafePointer[SIMD[T, 1]], Int, Int) -> None]() raises:
     alias iterations = 10
