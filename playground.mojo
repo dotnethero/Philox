@@ -1,22 +1,35 @@
 from time import perf_counter_ns
-from random import seed, random_ui64
+from random import seed, rand
 from memory import UnsafePointer
-from philox.reference import cpu_kernel_32, cpu_kernel_64
+from philox.reference import cpu_fill_32, cpu_fill_64
 
-fn run_test[T: DType, //, cpu_kernel: fn(UnsafePointer[SIMD[T, 1]], Int, Int) -> None]() raises:
-    alias iterations = 10
-    alias size = 1_000_000_000
-
-    var output_ptr = UnsafePointer[Scalar[T]].alloc(size)
-
+fn bench[fut: fn() capturing -> None](iterations: Int):
     var start = perf_counter_ns()
-    for i in range(iterations):
-        for j in range(size // 4):
-            cpu_kernel(output_ptr, size, j)
+    for _ in range(iterations):
+        fut() # Function under test
 
     var end = perf_counter_ns()
     var time_ns = end - start
     print("CPU time:", time_ns / 1_000_000.0 / iterations, "ms")
+
+fn run_test[T: DType, //, cpu_kernel: fn(UnsafePointer[SIMD[T, 1]], Int) -> None]() raises:
+    alias size = 10_000_000
+    var output_ptr = UnsafePointer[Scalar[T]].alloc(size)
+
+    fn baseline() capturing:
+        rand(output_ptr, size)
+        
+    fn fut() capturing:
+        cpu_kernel(output_ptr, size)
+
+    bench[fut](10)
+
+    for i in range(0, 12):
+        print(output_ptr[i], end = " ")
+        if (i & 3 == 3):
+            print()
+
+    bench[baseline](10)
 
     for i in range(0, 12):
         print(output_ptr[i], end = " ")
@@ -25,9 +38,11 @@ fn run_test[T: DType, //, cpu_kernel: fn(UnsafePointer[SIMD[T, 1]], Int, Int) ->
 
 fn main() raises:
     print("Philox 4x32:")
-    run_test[cpu_kernel_32]()
-    # CPU time: 2403.7057 ms | AMD Ryzen 7 5700X
+    run_test[cpu_fill_32]()
+    # CPU time: 22.9584  | AMD Ryzen 7 5700X
+    # CPU time: 577.6055 | Baseline: rand
 
     print("Philox 4x64:")
-    run_test[cpu_kernel_64]()
-    # CPU time: 3681.977 ms | AMD Ryzen 7 5700X
+    run_test[cpu_fill_64]()
+    # CPU time: 33.5578 ms  | AMD Ryzen 7 5700X
+    # CPU time: 574.2295 ms | Baseline: rand
