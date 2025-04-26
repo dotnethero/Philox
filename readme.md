@@ -42,13 +42,14 @@ fn main():
 ## Playground
 
 ```bash
-$ magic run mojo playground.mojo
+$ magic run cpu
+$ magic run gpu
 ```
 
 ## Testing
 
 ```bash
-$ magic run mojo test
+$ magic run test
 Testing Time: 1.987s
 Total Discovered Tests: 7
 Passed : 7 (100.00%)

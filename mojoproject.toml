@@ -7,7 +7,7 @@ version = "0.1.0"
 
 [tasks]
 cpu = "mojo run playground.mojo"
-gpu = "mojo run kernels.mojo"
+gpu = "mojo run playground-gpu.mojo"
 test = "mojo test"
 
 [dependencies]
