@@ -1,4 +1,5 @@
 from memory import UnsafePointer
+from algorithm.functional import vectorize, parallelize
 
 @always_inline
 fn cpu_kernel_32(buffer: UnsafePointer[Scalar[DType.float32]], size: Int, idx: Int):
@@ -17,9 +18,13 @@ fn cpu_kernel_64(buffer: UnsafePointer[Scalar[DType.float64]], size: Int, idx: I
     buffer.store(idx * 4, val) # TODO: bound check
 
 fn cpu_fill_32(buffer: UnsafePointer[Scalar[DType.float32]], size: Int):
-    for i in range(size // 4):
+    @parameter
+    fn closure(i: Int):
         cpu_kernel_32(buffer, size, i)
+    parallelize[func=closure](num_work_items=size//4)
 
 fn cpu_fill_64(buffer: UnsafePointer[Scalar[DType.float64]], size: Int):
-    for i in range(size // 4):
+    @parameter
+    fn closure(i: Int):
         cpu_kernel_64(buffer, size, i)
+    parallelize[func=closure](num_work_items=size//4)
