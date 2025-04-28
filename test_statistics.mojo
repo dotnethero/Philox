@@ -1,11 +1,11 @@
 from testing import assert_almost_equal, assert_true
-from philox import PhiloxFloat64
+from philox.streams import Stream64F
 from philox.testing import get_histogram
 
 fn test_basic_statistics() raises:
     alias samples = 10_000_000
     alias numbers_per_sample = 4
-    var generator = PhiloxFloat64(123451, 67890)
+    var generator = Stream64F(123451, 67890)
     var sum = 0.0
     var sum_squared = 0.0
     

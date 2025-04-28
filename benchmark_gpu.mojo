@@ -1,5 +1,5 @@
 from math import ceildiv
-from philox.kernels import fill_kernel_32f, fill_kernel_64f
+from philox.kernels import fill_kernel_f32, fill_kernel_f64
 from gpu import thread_idx, global_idx
 from gpu.host import DeviceContext, DeviceBuffer, Dim
 from memory import UnsafePointer
@@ -22,18 +22,13 @@ fn run_test[T: DType, //, kernel: fn(UnsafePointer[SIMD[T, 1]], Int) -> None]() 
 
     output_dev.enqueue_copy_to(output_host) # ctx.enqueue_copy(output_dev, output_host) ?
     ctx.synchronize()
-    
-    for i in range(0, 12):
-        print(output_host[i], end = " ")
-        if (i & 3 == 3):
-            print()
 
 fn main() raises:
     print("Philox 4x32:")
-    run_test[fill_kernel_32f]()
+    run_test[fill_kernel_f32]()
     # Kernel time: 14.6859 ms | RTX 4060Ti
 
     print("Philox 4x64:")
-    run_test[fill_kernel_64f]()
+    run_test[fill_kernel_f64]()
     # Kernel time: 40.1815 ms | RTX 4060Ti
 

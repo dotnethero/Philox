@@ -1,8 +1,8 @@
-from .generators import PhiloxFloat64
+from .streams import Stream64F
 
 fn get_histogram[bins: Int](seed1: UInt64, seed2: UInt64, samples: Int) -> InlineArray[Int, bins]:
     alias width = 4
-    var generator = PhiloxFloat64(seed1, seed2)
+    var generator = Stream64F(seed1, seed2)
     var histogram = InlineArray[Int, bins](fill = 0)
     var i = 0
     for _ in range(samples // width):
