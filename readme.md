@@ -38,7 +38,7 @@ fn main():
 
 ## Benchmarks
 
-CPU benchmark is against built-in `rand` function
+CPU benchmark is against built-in `rand` function. Number of samples: 10 000 000
 
 ```bash
 $ magic run cpu
@@ -50,7 +50,7 @@ CPU time: 11.082465899999999 ms
 CPU time: 579.7956587 ms
 ```
 
-GPU benchmark measures only kernel time, without memory copy to host.
+GPU benchmark measures only kernel time, without memory copy to host. Number of samples: 1 000 000 000
 
 ```bash
 $ magic run gpu
@@ -59,6 +59,8 @@ Kernel time: 14.6847747 ms
 Philox 4x64:
 Kernel time: 44.880999700000004 ms
 ```
+
+cuRANDDx: CUDA kernels (same algorithm, Philox4-10)
 
 ```bash
 $ ./benchmark_curanddx.sh 
