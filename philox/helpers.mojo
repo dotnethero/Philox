@@ -2,22 +2,6 @@ alias UInt32x2 = SIMD[DType.uint32, 2]
 alias UInt64x2 = SIMD[DType.uint64, 2]
 
 @always_inline
-fn identity[T: AnyTrivialRegType](x: T) -> T:
-    return x
-
-@always_inline
-fn to_float32[Width: Int](x: SIMD[DType.uint32, Width]) -> SIMD[DType.float32, Width]:
-    alias Mantissa = UInt32(1) << 23
-    alias Multiplier = Float32(1) / Float32(Mantissa)
-    return (x >> 9).cast[DType.float32]() * Multiplier
-
-@always_inline
-fn to_float64[Width: Int](x: SIMD[DType.uint64, Width]) -> SIMD[DType.float64, Width]:
-    alias Mantissa = UInt64(1) << 52
-    alias Multiplier = Float64(1) / Float64(Mantissa)
-    return (x >> 12).cast[DType.float64]() * Multiplier
-
-@always_inline
 fn asfloat[Width: Int](x: SIMD[DType.uint32, Width]) -> SIMD[DType.float32, Width]:
     alias Mantissa = UInt32(1) << 23
     alias Multiplier = Float32(1) / Float32(Mantissa)

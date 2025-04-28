@@ -16,8 +16,8 @@ fn increment[T: DType](ctr: RngCounter[T]) -> RngCounter[T]:
 struct PhiloxGenerator[
     T: DType, # Underlying type
     U: DType, # Target type
-    Philox: fn(RngKey[T], RngCounter[T]) -> RngValue[T],
-    Map: fn(RngValue[T]) -> RngValue[U]]:
+    //,
+    Gen: fn(RngKey[T], RngCounter[T]) -> RngValue[U]]:
 
     var key: RngKey[T]
     var counter: RngCounter[T]
@@ -28,7 +28,7 @@ struct PhiloxGenerator[
 
     @always_inline
     fn next(mut self) -> RngValue[U]:
-        var value = Map(Philox(self.key, self.counter))
+        var value = Gen(self.key, self.counter)
         self.counter = increment(self.counter)
         return value
 
@@ -38,13 +38,13 @@ struct PhiloxGenerator[
         var leftover = size - iterations * 4
         
         for i in range(0, iterations):
-            var result = Map(Philox(self.key, self.counter))
+            var result = Gen(self.key, self.counter)
             var offset = i * 4
             ptr.store(offset, result)
             self.counter = increment(self.counter)
 
         if leftover > 0:
-            var result = Map(Philox(self.key, self.counter))
+            var result = Gen(self.key, self.counter)
             var offset = iterations * 4
             for i in range(0, leftover):
                 ptr[offset + i] = result[i]
