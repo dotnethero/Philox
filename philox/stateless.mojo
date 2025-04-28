@@ -1,13 +1,14 @@
 from .helpers import mulhilo, asfloat
 
+# Keys
 alias UInt32x2 = SIMD[DType.uint32, 2]
-alias UInt32x4 = SIMD[DType.uint32, 4]
-
 alias UInt64x2 = SIMD[DType.uint64, 2]
-alias UInt64x4 = SIMD[DType.uint64, 4]
 
-alias Float32x = SIMD[DType.float32, _]
-alias Float64x = SIMD[DType.float64, _]
+# Counters and outputs
+alias UInt32x4 = SIMD[DType.uint32, 4]
+alias UInt64x4 = SIMD[DType.uint64, 4]
+alias Float32x4 = SIMD[DType.float32, 4]
+alias Float64x4 = SIMD[DType.float64, 4]
 
 @always_inline
 fn bump_key(key: UInt32x2) -> UInt32x2:
@@ -60,11 +61,11 @@ fn philox4x64[Rounds: UInt32 = 10](key: UInt64x2, ctr: UInt64x4) -> UInt64x4:
     return ctrx
 
 @always_inline
-fn philox4x32f[Rounds: UInt32 = 10](key: UInt32x2, ctr: UInt32x4) -> Float32x[4]:
+fn philox4x32f[Rounds: UInt32 = 10](key: UInt32x2, ctr: UInt32x4) -> Float32x4:
     var rng = philox4x32[Rounds](key, ctr)
     return asfloat(rng)
 
 @always_inline
-fn philox4x64f[Rounds: UInt32 = 10](key: UInt64x2, ctr: UInt64x4) -> Float64x[4]:
+fn philox4x64f[Rounds: UInt32 = 10](key: UInt64x2, ctr: UInt64x4) -> Float64x4:
     var rng = philox4x64[Rounds](key, ctr)
     return asfloat(rng)
