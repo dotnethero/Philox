@@ -1,0 +1,1 @@
+nvcc ./reference/curanddx_gen.cu -I ~/mathdx/25.01/include && ./a.out && rm ./a.out

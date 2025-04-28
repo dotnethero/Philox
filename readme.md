@@ -50,9 +50,7 @@ CPU time: 11.082465899999999 ms
 CPU time: 579.7956587 ms
 ```
 
-GPU benchmark measures only kernel time,without memory copy to host.
-
-TODO: test against cuBLASDx
+GPU benchmark measures only kernel time, without memory copy to host.
 
 ```bash
 $ magic run gpu
@@ -60,6 +58,13 @@ Philox 4x32:
 Kernel time: 14.6847747 ms
 Philox 4x64:
 Kernel time: 44.880999700000004 ms
+```
+
+```bash
+$ ./benchmark_curanddx.sh 
+Performance Statistics:
+Average time: 14.92 ms
+Standard deviation: 0.13 ms
 ```
 
 ## Testing
