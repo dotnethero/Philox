@@ -1,11 +1,11 @@
 from math import ceildiv
-from philox.kernels import fill_kernel_32, fill_kernel_64
+from philox.kernels import fill_kernel_32f, fill_kernel_64f
 from gpu import thread_idx, global_idx
 from gpu.host import DeviceContext, DeviceBuffer, Dim
 from memory import UnsafePointer
 
 fn run_test[T: DType, //, kernel: fn(UnsafePointer[SIMD[T, 1]], Int) -> None]() raises:
-    alias iterations = 100
+    alias iterations = 10
     alias size = 1_000_000_000
     alias block_size = 256
     alias grid_size = ceildiv(size // 4, block_size) # we fill 4 values per thread
@@ -30,10 +30,10 @@ fn run_test[T: DType, //, kernel: fn(UnsafePointer[SIMD[T, 1]], Int) -> None]() 
 
 fn main() raises:
     print("Philox 4x32:")
-    run_test[fill_kernel_32]()
+    run_test[fill_kernel_32f]()
     # Kernel time: 14.6859 ms | RTX 4060Ti
 
     print("Philox 4x64:")
-    run_test[fill_kernel_64]()
+    run_test[fill_kernel_64f]()
     # Kernel time: 40.1815 ms | RTX 4060Ti
 
