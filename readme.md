@@ -4,13 +4,11 @@ This repository contains an implementation of the Philox Random Number Generator
 
 ## Features
 
-- Multiple data type support:
-  - `PhiloxUInt32` - 32-bit unsigned integers
-  - `PhiloxUInt64` - 64-bit unsigned integers
-  - `PhiloxFloat32` - 32-bit floating point numbers
-  - `PhiloxFloat64` - 64-bit floating point numbers
-- Stateless operation with seed control
-- SIMD-optimized implementation
+- Stateless generators
+- Statefull CPU streams
+- Parallel CPU fill functions
+- Reusable GPU kernel
+- GPU fill functions
 
 ## Usage
 
@@ -18,8 +16,7 @@ This repository contains an implementation of the Philox Random Number Generator
 
 ```mojo
 from random import seed, random_ui64
-from philox import PhiloxFloat64
-from philox.presentation import print_simd, print_array
+from philox.streams import Stream64F
 
 fn main():
     seed()
@@ -27,32 +24,55 @@ fn main():
     var seed2 = random_ui64(0, UInt64.MAX)
 
     # Create a generator with specific seeds
-    var generator = PhiloxFloat64(seed1, seed2)
+    var generator = Stream64F(seed1, seed2)
     
     # Generate a SIMD vector of 4 random numbers
     var random_quad = generator.next()
-    print_simd(random_quad)
+    print(random_quad)
     
     # Fill a buffer with random numbers
-    var random_array = InlineArray[Float64, 13](uninitialized = True)
+    var random_array = InlineArray[Float64, 42](uninitialized = True)
     generator.fill(random_array.unsafe_ptr(), len(random_array))
-    print_array(random_array)
+    print(random_array[0])
 ```
 
-## Playground
+## Benchmarks
+
+CPU benchmark is against built-in `rand` function
 
 ```bash
 $ magic run cpu
+Philox 4x32:
+CPU time: 9.581642800000001 ms
+CPU time: 602.7851763 ms
+Philox 4x64:
+CPU time: 11.082465899999999 ms
+CPU time: 579.7956587 ms
+```
+
+GPU benchmark measures only kernel time,without memory copy to host.
+
+TODO: test against cuBLASDx
+
+```bash
 $ magic run gpu
+Philox 4x32:
+Kernel time: 14.6847747 ms
+Philox 4x64:
+Kernel time: 44.880999700000004 ms
 ```
 
 ## Testing
 
+Tests include statistics verification for mean, variance, histogram uniformity, and chi-square test
+
 ```bash
 $ magic run test
-Testing Time: 1.987s
-Total Discovered Tests: 7
-Passed : 7 (100.00%)
+Testing Time: 2.187s
+
+Total Discovered Tests: 5
+
+Passed : 5 (100.00%)
 Failed : 0 (0.00%)
 Skipped: 0 (0.00%)
 ```
