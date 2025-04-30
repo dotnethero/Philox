@@ -1,6 +1,6 @@
 from memory import UnsafePointer
 from algorithm.functional import parallelize
-from .inplace import generate_inplace, generate_inplace_no_unroll
+from .inplace import generate_inplace, generate_inplace_4x4
 from .stateless import generate_u32, generate_u64, generate_f32, generate_f64
 
 @always_inline
