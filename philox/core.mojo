@@ -1,4 +1,4 @@
-from .helpers import mulhilo
+from .hilo import mulhilo
 
 # Keys
 alias UInt32x2 = SIMD[DType.uint32, 2]
