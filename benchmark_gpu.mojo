@@ -22,10 +22,7 @@ fn run_test[T: DType, //, kernel: fn(UnsafePointer[SIMD[T, 1]], Int) -> None]() 
 
     output_dev.enqueue_copy_to(output_host) # ctx.enqueue_copy(output_dev, output_host) ?
     ctx.synchronize()
-
-    for i in range(0, 16):
-        print(output_host[i], end=", ")
-    print("...")
+    
 
 fn main() raises:
     print("Philox 4x32:")

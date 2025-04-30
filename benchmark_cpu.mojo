@@ -30,10 +30,10 @@ fn run_test[T: DType, //, cpu_kernel: fn(UnsafePointer[SIMD[T, 1]], Int) -> None
 fn main() raises:
     print("Philox 4x32:")
     run_test[fill_parallel_f32]()
-    # CPU time:   4.9347 ms | AMD Ryzen 7 5700X
-    # CPU time: 600.0941 ms | Baseline: rand
+    # CPU time:   6.3074 ms | AMD Ryzen 7 5700X | 10 rounds
+    # CPU time: 590.9151 ms | Baseline: rand
 
     print("Philox 4x64:")
     run_test[fill_parallel_f64]()
-    # CPU time:   6.093 ms | AMD Ryzen 7 5700X
-    # CPU time: 613.295 ms | Baseline: rand
+    # CPU time:   9.7594 ms | AMD Ryzen 7 5700X | 10 rounds
+    # CPU time: 571.0359 ms | Baseline: rand
