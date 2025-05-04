@@ -4,13 +4,14 @@ from utils.numerics import max_finite
 @always_inline
 fn double_type_of[U: DType]() -> DType:
     @parameter
-    if (U is DType.uint16):
+    if U is DType.uint16:
         return DType.uint32
-    if (U is DType.uint32):
+    elif U is DType.uint32:
         return DType.uint64
-    if (U is DType.uint64):
+    elif U is DType.uint64:
         return DType.uint128
-    return DType.invalid
+    else:
+        return DType.invalid
 
 @always_inline
 fn mulhilo[U: DType, //](a: SIMD[U, 1], b: SIMD[U, 1]) -> SIMD[U, 2]:
