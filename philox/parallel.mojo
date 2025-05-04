@@ -1,7 +1,7 @@
 from memory import UnsafePointer
 from algorithm.functional import parallelize
 from .inplace import generate_inplace
-from .stateless import generate_u32, generate_u64, generate_f32, generate_f64
+from .stateless import generate_u16, generate_u32, generate_u64, generate_f16, generate_f32, generate_f64
 
 @always_inline
 fn fill_parallel[
@@ -15,7 +15,9 @@ fn fill_parallel[
         generate_inplace[Gen, UnrollFactor](buffer, size, i)
     parallelize[func=closure](num_work_items=size//items_at_once)
 
+alias fill_parallel_u16 = fill_parallel[generate_u16[10]]
 alias fill_parallel_u32 = fill_parallel[generate_u32[10]]
 alias fill_parallel_u64 = fill_parallel[generate_u64[10]]
+alias fill_parallel_f16 = fill_parallel[generate_f16[10]]
 alias fill_parallel_f32 = fill_parallel[generate_f32[10]]
 alias fill_parallel_f64 = fill_parallel[generate_f64[10]]

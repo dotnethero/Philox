@@ -1,7 +1,7 @@
 from time import perf_counter_ns
 from random import seed, rand
 from memory import UnsafePointer
-from philox.parallel import fill_parallel_f32, fill_parallel_f64
+from philox.parallel import fill_parallel_f16, fill_parallel_f32, fill_parallel_f64
 
 fn bench[fut: fn() capturing -> None](iterations: Int):
     var start = perf_counter_ns()
@@ -28,6 +28,11 @@ fn run_test[T: DType, //, cpu_kernel: fn(UnsafePointer[SIMD[T, 1]], Int) -> None
     output_ptr.free()
 
 fn main() raises:
+    print("Philox 4x16:")
+    run_test[fill_parallel_f16]()
+    # CPU time:   6.3074 ms | AMD Ryzen 7 5700X | 10 rounds
+    # CPU time: 590.9151 ms | Baseline: rand
+
     print("Philox 4x32:")
     run_test[fill_parallel_f32]()
     # CPU time:   6.3074 ms | AMD Ryzen 7 5700X | 10 rounds

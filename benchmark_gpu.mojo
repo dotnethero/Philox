@@ -1,5 +1,5 @@
 from math import ceildiv
-from philox.kernels import fill_kernel_f32, fill_kernel_f64, fill_kernel_f32_unroll_2
+from philox.kernels import fill_kernel_f16, fill_kernel_f32, fill_kernel_f64, fill_kernel_f16_unroll_2, fill_kernel_f32_unroll_2
 from gpu import thread_idx, global_idx
 from gpu.host import DeviceContext, DeviceBuffer, Dim
 from memory import UnsafePointer
@@ -26,6 +26,14 @@ fn run_test[T: DType, //, kernel: fn(UnsafePointer[SIMD[T, 1]], Int) -> None, Un
     
 
 fn main() raises:
+    print("Philox 4x16:")
+    run_test[fill_kernel_f16]()
+    # Kernel time: 14.8379 ms | RTX 4060Ti
+
+    print("Philox 4x16, manual unroll:")
+    run_test[fill_kernel_f16_unroll_2, UnrollFactor = 2]()
+    # Kernel time: 14.8379 ms | RTX 4060Ti
+
     print("Philox 4x32:")
     run_test[fill_kernel_f32]()
     # Kernel time: 14.8379 ms | RTX 4060Ti
