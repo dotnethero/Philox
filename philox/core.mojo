@@ -16,7 +16,7 @@ alias Float64x4 = SIMD[DType.float64, 4]
 
 @always_inline
 fn bump_key(key: UInt16x2) -> UInt16x2:
-    alias W = UInt16x2(0x9E37, 0x79B9) # TODO: Verify
+    alias W = UInt16x2(0x9E37, 0x9E38)
     return key + W
 
 @always_inline
@@ -31,7 +31,7 @@ fn bump_key(key: UInt64x2) -> UInt64x2:
 
 @always_inline
 fn bump_counter(key: UInt16x2, ctr: UInt16x4) -> UInt16x4:
-    alias M4 = UInt16x2(0xD251, 0xCD9E) # TODO: Verify
+    alias M4 = UInt16x2(0x8003, 0x9007)
     var hilo1 = mulhilo(M4[0], ctr[0])
     var hilo2 = mulhilo(M4[1], ctr[2])
     var a = UInt16x4(hilo2[0], hilo2[1], hilo1[0], hilo1[1])

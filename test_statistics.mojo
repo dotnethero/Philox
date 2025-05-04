@@ -1,8 +1,34 @@
 from testing import assert_almost_equal, assert_true
-from philox.streams import Stream64F
-from philox.testing import get_histogram_from_stream, get_histogram_from_fill_cpu,get_histogram_from_fill_gpu
+from philox.streams import Stream16F, Stream32F, Stream64F
+from philox.testing
+import 
+    get_histogram_from_stream_64,
+    get_histogram_from_fill_cpu_16,
+    get_histogram_from_fill_cpu_32,
+    get_histogram_from_fill_cpu_64,
+    get_histogram_from_fill_gpu
 
-fn test_basic_statistics() raises:
+fn test_basic_statistics_16() raises:
+    alias samples = 100_000_000
+    alias numbers_per_sample = 4
+    var generator = Stream16F(123451, 67890)
+    var sum: Float64 = 0.0
+    var sum_squared: Float64 = 0.0
+    
+    for _ in range(samples):
+        var values = generator.next()
+        var values_squared = values * values
+        sum += Float64(values.reduce_add())
+        sum_squared += Float64(values_squared.reduce_add())
+
+    var mean = sum / (samples * numbers_per_sample)
+    var variance = (sum_squared / (samples * numbers_per_sample)) - (mean * mean)
+    print("Mean:", mean)
+    print("Variance:", variance)
+    assert_almost_equal(mean, 0.5, atol=0.001)
+    assert_almost_equal(variance, 1.0 / 12.0, atol=0.001)
+
+fn test_basic_statistics_64() raises:
     alias samples = 10_000_000
     alias numbers_per_sample = 4
     var generator = Stream64F(123451, 67890)
@@ -23,13 +49,25 @@ fn test_basic_statistics() raises:
 fn test_histogram_uniformity_stream() raises:
     alias bins = 20
     alias samples = 10_000_000
-    var histogram = get_histogram_from_stream[bins](54321, 98765, samples)
+    var histogram = get_histogram_from_stream_64[bins](54321, 98765, samples)
     histogram_uniformity_for[bins](histogram, samples)
 
-fn test_histogram_uniformity_fill_cpu() raises:
+fn test_histogram_uniformity_fill_cpu_16() raises:
+    alias bins = 20
+    alias samples = 100_000_000
+    var histogram = get_histogram_from_fill_cpu_16[bins](54321, 98765, samples)
+    histogram_uniformity_for[bins](histogram, samples)
+
+fn test_histogram_uniformity_fill_cpu_32() raises:
     alias bins = 20
     alias samples = 10_000_000
-    var histogram = get_histogram_from_fill_cpu[bins](54321, 98765, samples)
+    var histogram = get_histogram_from_fill_cpu_32[bins](54321, 98765, samples)
+    histogram_uniformity_for[bins](histogram, samples)
+
+fn test_histogram_uniformity_fill_cpu_64() raises:
+    alias bins = 20
+    alias samples = 10_000_000
+    var histogram = get_histogram_from_fill_cpu_64[bins](54321, 98765, samples)
     histogram_uniformity_for[bins](histogram, samples)
 
 fn test_histogram_uniformity_fill_gpu() raises:
@@ -56,13 +94,13 @@ fn histogram_uniformity_for[bins: Int](histogram: InlineArray[Int, bins], sample
 fn test_chi_square_stream() raises:
     alias bins = 100
     alias samples = 10_000_000
-    var histogram = get_histogram_from_stream[bins](54321, 98765, samples)
+    var histogram = get_histogram_from_stream_64[bins](54321, 98765, samples)
     chi_square_for[bins](histogram, samples)
 
 fn test_chi_square_fill_cpu() raises:
     alias bins = 100
     alias samples = 10_000_000
-    var histogram = get_histogram_from_fill_cpu[bins](54321, 98765, samples)
+    var histogram = get_histogram_from_fill_cpu_64[bins](54321, 98765, samples)
     chi_square_for[bins](histogram, samples)
 
 fn test_chi_square_fill_gpu() raises:

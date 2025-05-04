@@ -1,5 +1,5 @@
 from memory import UnsafePointer
-from .stateless import generate_u32, generate_u64, generate_f32, generate_f64
+from .stateless import generate_u16, generate_u32, generate_u64, generate_f16, generate_f32, generate_f64
 
 struct Stream[T: DType, U: DType, //, Gen: fn(SIMD[T, 2], SIMD[T, 4]) -> SIMD[U, 4]]:
     var key: SIMD[T, 2]
@@ -36,7 +36,9 @@ struct Stream[T: DType, U: DType, //, Gen: fn(SIMD[T, 2], SIMD[T, 4]) -> SIMD[U,
                 ptr[offset + i] = result[i]
             self.idx += 1
 
+alias Stream16U = Stream[generate_u16[10]]
 alias Stream32U = Stream[generate_u32[10]]
 alias Stream64U = Stream[generate_u64[10]]
+alias Stream16F = Stream[generate_f16[10]]
 alias Stream32F = Stream[generate_f32[10]]
 alias Stream64F = Stream[generate_f64[10]]
