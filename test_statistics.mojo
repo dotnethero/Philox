@@ -1,6 +1,6 @@
 from testing import assert_almost_equal, assert_true
 from philox.streams import Stream64F
-from philox.testing import get_histogram_from_stream, get_histogram_from_fill_parallel
+from philox.testing import get_histogram_from_stream, get_histogram_from_fill_cpu,get_histogram_from_fill_gpu
 
 fn test_basic_statistics() raises:
     alias samples = 10_000_000
@@ -29,7 +29,13 @@ fn test_histogram_uniformity_stream() raises:
 fn test_histogram_uniformity_fill_cpu() raises:
     alias bins = 20
     alias samples = 10_000_000
-    var histogram = get_histogram_from_fill_parallel[bins](54321, 98765, samples)
+    var histogram = get_histogram_from_fill_cpu[bins](54321, 98765, samples)
+    histogram_uniformity_for[bins](histogram, samples)
+
+fn test_histogram_uniformity_fill_gpu() raises:
+    alias bins = 20
+    alias samples = 10_000_000
+    var histogram = get_histogram_from_fill_gpu[bins](54321, 98765, samples)
     histogram_uniformity_for[bins](histogram, samples)
 
 fn histogram_uniformity_for[bins: Int](histogram: InlineArray[Int, bins], samples: Int) raises:
@@ -56,7 +62,13 @@ fn test_chi_square_stream() raises:
 fn test_chi_square_fill_cpu() raises:
     alias bins = 100
     alias samples = 10_000_000
-    var histogram = get_histogram_from_fill_parallel[bins](54321, 98765, samples)
+    var histogram = get_histogram_from_fill_cpu[bins](54321, 98765, samples)
+    chi_square_for[bins](histogram, samples)
+
+fn test_chi_square_fill_gpu() raises:
+    alias bins = 100
+    alias samples = 10_000_000
+    var histogram = get_histogram_from_fill_gpu[bins](54321, 98765, samples)
     chi_square_for[bins](histogram, samples)
 
 fn chi_square_for[bins: Int](histogram: InlineArray[Int, bins], samples: Int) raises:
