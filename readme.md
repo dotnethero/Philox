@@ -43,11 +43,11 @@ CPU benchmark is against built-in `rand` function. Number of samples: 10 000 000
 ```bash
 $ magic run cpu
 Philox 4x32:
-CPU time: 6.8424148 ms
-CPU time: 590.9461063 ms
+CPU time: 7.2638 ms
+CPU time: 614.2812 ms
 Philox 4x64:
-CPU time: 9.3381464 ms
-CPU time: 570.9628660 ms
+CPU time: 10.3108 ms
+CPU time: 593.7460 ms
 ```
 
 GPU benchmark measures only kernel time, without memory copy to host. Number of samples: 1 000 000 000
@@ -55,9 +55,9 @@ GPU benchmark measures only kernel time, without memory copy to host. Number of 
 ```bash
 $ magic run gpu
 Philox 4x32:
-Kernel time: 8.2673659 ms
+Kernel time: 14.9248 ms
 Philox 4x64:
-Kernel time: 39.8659576 ms
+Kernel time: 50.7695 ms
 ```
 
 cuRANDDx: CUDA kernels (same algorithm, Philox4-10)
