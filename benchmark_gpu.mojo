@@ -8,7 +8,7 @@ fn run_test[T: DType, //, kernel: fn(UnsafePointer[SIMD[T, 1]], Int) -> None]() 
     alias iterations = 10
     alias size = 1_000_000_000
     alias block_size = 128
-    alias grid_size = ceildiv(size // 16, block_size) # we fill 16 values per thread
+    alias grid_size = ceildiv(size // 4, block_size) # we fill 4 values per thread
 
     var ctx = DeviceContext()
     var output_host = ctx.enqueue_create_host_buffer[T](size)
@@ -27,9 +27,9 @@ fn run_test[T: DType, //, kernel: fn(UnsafePointer[SIMD[T, 1]], Int) -> None]() 
 fn main() raises:
     print("Philox 4x32:")
     run_test[fill_kernel_f32]()
-    # Kernel time: 8.3625 ms | RTX 4060Ti
+    # Kernel time: 14.8379 ms | RTX 4060Ti
 
     print("Philox 4x64:")
     run_test[fill_kernel_f64]()
-    # Kernel time: 40.1815 ms | RTX 4060Ti
+    # Kernel time: 41.9962 ms | RTX 4060Ti
 
