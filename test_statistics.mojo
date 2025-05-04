@@ -1,6 +1,6 @@
 from testing import assert_almost_equal, assert_true
 from philox.streams import Stream64F
-from philox.testing import get_histogram
+from philox.testing import get_histogram, get_histogram_from_array
 
 fn test_basic_statistics() raises:
     alias samples = 10_000_000
@@ -20,14 +20,23 @@ fn test_basic_statistics() raises:
     assert_almost_equal(mean, 0.5, atol=0.001)
     assert_almost_equal(variance, 1.0 / 12.0, atol=0.001)
 
-fn test_histogram_uniformity() raises:
+fn test_histogram_uniformity_stream() raises:
     alias bins = 20
     alias samples = 10_000_000
-    alias expected_per_bin = samples / bins
-    alias max_deviation_percent = 0.5
-    
     var histogram = get_histogram[bins](54321, 98765, samples)
+    histogram_uniformity_for[bins](histogram, samples)
 
+fn test_histogram_uniformity_fill_cpu() raises:
+    alias bins = 20
+    alias samples = 10_000_000
+    var histogram = get_histogram_from_array[bins](54321, 98765, samples)
+    histogram_uniformity_for[bins](histogram, samples)
+
+fn histogram_uniformity_for[bins: Int](histogram: InlineArray[Int, bins], samples: Int) raises:
+    alias max_deviation_percent = 0.5
+
+    var expected_per_bin = samples / bins
+    
     for i in range(bins):
         var deviation_percent = abs(histogram[i] - expected_per_bin) * 100.0 / expected_per_bin
         var log = String.format("Bin {}: Deviation: {}% - {}", i, deviation_percent, String("OK") if deviation_percent < max_deviation_percent else "Error")
@@ -38,19 +47,26 @@ fn test_histogram_uniformity() raises:
         var error = String.format("Bin {}: Deviation: {}% > {}%", i, deviation_percent, max_deviation_percent)
         assert_true(deviation_percent < max_deviation_percent, error)
 
-fn test_chi_square() raises:
+fn test_chi_square_stream() raises:
     alias bins = 100
     alias samples = 10_000_000
-    alias expected_per_bin = samples / bins
+    var histogram = get_histogram[bins](54321, 98765, samples)
+    chi_square_for[bins](histogram, samples)
 
+fn test_chi_square_fill_cpu() raises:
+    alias bins = 100
+    alias samples = 10_000_000
+    var histogram = get_histogram_from_array[bins](54321, 98765, samples)
+    chi_square_for[bins](histogram, samples)
+
+fn chi_square_for[bins: Int](histogram: InlineArray[Int, bins], samples: Int) raises:
     alias degrees_of_freedom = bins - 1
     alias expected_chi_square = Float64(degrees_of_freedom)
     alias chi_square_std_dev = (2.0 * degrees_of_freedom) ** 0.5
     alias max_acceptable = expected_chi_square + 1 * chi_square_std_dev
-    
-    var histogram = get_histogram[bins](54321, 98765, samples)
 
     # Chi-square test for uniformity
+    var expected_per_bin = samples / bins
     var chi_square = 0.0
     for i in range(bins):
         var diff = Float64(histogram[i] - expected_per_bin)
