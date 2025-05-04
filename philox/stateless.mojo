@@ -15,6 +15,16 @@ alias Float16x4 = SIMD[DType.float16, 4]
 alias Float32x4 = SIMD[DType.float32, 4]
 alias Float64x4 = SIMD[DType.float64, 4]
 
+# @always_inline
+# fn generate_any[U: DType, Rounds: UInt32 = 10](key: SIMD[U, 2], ctr: SIMD[U, 4]) -> SIMD[U, 4]:
+#     var ctrx = ctr
+#     var keyx = key
+#     @parameter
+#     for i in range(0, Rounds):
+#         ctrx = bump_counter(keyx, ctrx);
+#         keyx = bump_key(keyx);
+#     return ctrx
+
 @always_inline
 fn generate_u16[Rounds: UInt32 = 10](key: UInt16x2, ctr: UInt16x4) -> UInt16x4:
     var ctrx = ctr

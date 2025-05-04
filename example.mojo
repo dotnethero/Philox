@@ -3,8 +3,8 @@ from philox.streams import Stream16F, Stream32F, Stream64F
 
 fn main():
     seed()
-    var seed1 = UInt16(random_ui64(0, UInt64(UInt16.MAX)))
-    var seed2 = UInt16(random_ui64(0, UInt64(UInt16.MAX)))
+    var seed1 = 0 # UInt16(random_ui64(0, UInt64(UInt16.MAX)))
+    var seed2 = 0 # UInt16(random_ui64(0, UInt64(UInt16.MAX)))
 
     # Create a generator with specific seeds
     var generator = Stream16F(seed1, seed2)
@@ -19,4 +19,6 @@ fn main():
 
     for i in range(len(random_array)):
         print(random_array[i], end = " ")
+        if i % 4 == 3:
+            print()
     print()
