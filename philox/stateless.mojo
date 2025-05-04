@@ -48,14 +48,14 @@ fn generate_u64[Rounds: UInt32 = 10](key: UInt64x2, ctr: UInt64x4) -> UInt64x4:
 @always_inline
 fn generate_f16[Rounds: UInt32 = 10](key: UInt16x2, ctr: UInt16x4) -> Float16x4:
     var rng = generate_u16[Rounds](key, ctr)
-    return asfloat[DType.float16, DType.uint16, 4](rng)
+    return asfloat[DType.float16](rng)
 
 @always_inline
 fn generate_f32[Rounds: UInt32 = 10](key: UInt32x2, ctr: UInt32x4) -> Float32x4:
     var rng = generate_u32[Rounds](key, ctr)
-    return asfloat[DType.float32, DType.uint32, 4](rng)
+    return asfloat[DType.float32](rng)
 
 @always_inline
 fn generate_f64[Rounds: UInt32 = 10](key: UInt64x2, ctr: UInt64x4) -> Float64x4:
     var rng = generate_u64[Rounds](key, ctr)
-    return asfloat[DType.float64, DType.uint64, 4](rng)
+    return asfloat[DType.float64](rng)

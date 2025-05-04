@@ -3,7 +3,7 @@ from builtin.dtype import _unsigned_integral_type_of
 from utils.numerics import FPUtils
 
 @always_inline
-fn asfloat[T: DType, U: DType, Width: Int](x: SIMD[U, Width]) -> SIMD[T, Width]:
+fn asfloat[U: DType, Width: Int, //, T: DType](x: SIMD[U, Width]) -> SIMD[T, Width]:
     constrained[U is _unsigned_integral_type_of[T](), "U should be unsigned integer type for T"]()
     alias mantissa_width = FPUtils[T].mantissa_width()
     alias exponent_width = bitwidthof[T]() - mantissa_width # Ignore sign
