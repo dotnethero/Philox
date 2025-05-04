@@ -13,4 +13,4 @@ fn generate_inplace[
     for i in range(0, UnrollFactor):
         var ctr = SIMD[T, 4](idx, i, 0, 0)
         var rng = Gen(key, ctr)
-        buffer.store(idx * 4 + i * 4, rng) # TODO: check bounds
+        buffer.store(idx * 4 * UnrollFactor + i * 4, rng) # TODO: check bounds
