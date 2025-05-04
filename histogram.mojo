@@ -1,12 +1,12 @@
 from random import seed, random_ui64
-from philox.testing import get_histogram, get_histogram_from_array
+from philox.testing import get_histogram_from_fill_parallel
 
 fn main() raises:
     alias bins = 20
     alias samples = 10_000_000
     alias max_deviation_percent = 0.5
 
-    var histogram = get_histogram_from_array[bins](54321, 98765, samples)
+    var histogram = get_histogram_from_fill_parallel[bins](54321, 98765, samples)
     var expected = samples / bins
     print("Expected per bin:", expected)
     
